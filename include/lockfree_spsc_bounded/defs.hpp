@@ -41,16 +41,21 @@ private:
 public:
   // Public Member functions :
   // Add appropriate constructors and destructors -> Add here only
-  // void wait_and_push(value) : Busy wait until element is pushed
-  // bool try_push(value) : Try to push if not full else leave (returns false if
-  // could not push else true) void wait_and_pop(value ref) : Busy wait until we
-  // have atmost 1 elt and then pop it and store in reference bool try_pop(value
-  // ref) : Try to pop and return false if failed bool empty(void) : Checks if
-  // the queue is empty and return bool bool peek(value ref) : Peek the top of
-  // the queue. Will work only in SPSC/MPSC why ?? [Reason this] Add static
-  // asserts Add emplace_back using perfect forwarding and variadic templates
-  // (you can use this in push then) Add size() function Any more suggestions ??
-  // Why no shared_ptr ?? [Reason this]
+  // 1. void wait_and_push(value) : Busy wait until element is pushed
+  // 2. bool try_push(value) : Try to push if not full else leave (returns false
+  // if could not push else true)
+  // 3. void wait_and_pop(value ref) : Busy wait until we have atmost 1 elt and
+  // then pop it and store in reference
+  // 4. bool try_pop(value ref) : Try to pop and return false if failed bool
+  // 5. empty(void) : Checks if the queue is empty and return bool
+  // 6. bool peek(value ref) : Peek the top of the queue.
+  // Will work only in SPSC/MPSC why ?? [Reason this]
+  // 7. Add static asserts
+  // 8. Add emplace_back using perfect forwarding and variadic templates (you
+  // can use this in push then)
+  // 9. Add size() function
+  // 10. Any more suggestions ??
+  // 11. Why no shared_ptr ?? [Reason this]
 };
 } // namespace tsfqueue::__impl
 

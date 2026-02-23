@@ -25,6 +25,8 @@ template <typename T, size_t Capacity> bool queue<T, Capacity>::empty() {}
 
 #endif
 
-// Add static asserts
-// Add emplace_back using perfect forwarding and variadic templates (you can use
-// this in push(s) then) Add size() function Any more suggestions ??
+// 1. Add static asserts
+// 2. Add emplace_back using perfect forwarding and variadic templates (you
+// can use this in push then)
+// 3. Add size() function
+// 4. Any more suggestions ??

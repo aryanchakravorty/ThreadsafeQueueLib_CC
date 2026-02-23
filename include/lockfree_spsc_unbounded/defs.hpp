@@ -39,15 +39,20 @@ private:
 public:
   // Public member functions :
   // Add relevant constructors and destructors -> Add these here only
-  // void push(value) : Pushes the value inside the queue, copies the value
-  // void wait_and_pop(value ref) : Blocking wait on queue, returns value in the
-  // reference passed as parameter bool try_pop(value ref) : Returns true and
-  // gives the value in reference passed, false otherwise bool empty() : Returns
-  // whether the queue is empty or not at that instant bool peek(value ref) :
-  // Returns the front/top element of queue in ref (false if empty queue) Add
-  // static asserts Add emplace_back using perfect forwarding and variadic
-  // templates (you can use this in push then) Add size() function Any more
-  // suggestions ?? Why no shared_ptr ?? [Reason this]
+  // 1. void push(value) : Pushes the value inside the queue, copies the value
+  // 2. void wait_and_pop(value ref) : Blocking wait on queue, returns value in
+  // the reference passed as parameter
+  // 3. bool try_pop(value ref) : Returns true and
+  // gives the value in reference passed, false otherwise
+  // 4. bool empty() : Returns
+  // whether the queue is empty or not at that instant
+  // 5. bool peek(value ref) : Returns the front/top element of queue in ref (false if empty queue)
+  // 6. Add static asserts
+  // 7. Add emplace_back using perfect forwarding and variadic templates (you
+  // can use this in push then)
+  // 8. Add size() function
+  // 9. Any more suggestions ??
+  // 10. Why no shared_ptr ?? [Reason this]
 };
 } // namespace tsfqueue::__impl
 

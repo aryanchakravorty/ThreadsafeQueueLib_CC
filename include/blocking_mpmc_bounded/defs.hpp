@@ -69,9 +69,11 @@ public:
   // 5. std::shared_ptr try_pop() : Returns a shared ptr with data, returns
   // nullptr if failed
   // 6. bool empty() : Returns whether the queue is empty or not at that instant
-  // Add static asserts
-  // Add emplace_back using perfect forwarding and variadic templates (you can
-  // use this in push then) Add size() function Any more suggestions ??
+  // 7. Add static asserts
+  // 8. Add emplace_back using perfect forwarding and variadic templates (you
+  // can use this in push then)
+  // 9. Add size() function
+  // 10. Any more suggestions ??
 };
 } // namespace tsfqueue::__impl
 
