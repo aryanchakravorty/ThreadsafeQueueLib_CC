@@ -6,6 +6,8 @@
 #include <memory>
 #include <type_traits>
 #include <thread>
+#include <cstddef>
+
 
 namespace tsfqueue::__impl {
 template <typename T> class lockfree_spsc_unbounded {

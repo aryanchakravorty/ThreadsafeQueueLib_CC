@@ -6,16 +6,20 @@
     //----------------------------------------
     //compiler was not able to find defintions using this alias
     // template <typename T>
-    // using queue = tsfqueue::__impl::lockfree_spsc_unbounded<T>;
+    // using queue = typename tsfqueue::__impl::lockfree_spsc_unbounded<T>;
     //----------------------------------------
 
 
     template <typename T> void tsfqueue::__impl::lockfree_spsc_unbounded<T>::push(T value) {
         //std::move casts it as rvalue-no cost of copying
+        static_assert(std::is_copy_constructible<T>::value,
+                  "T must be copy constructible");
         emplace_back(std::move(value));
     }
 
-    template <typename T> bool tsfqueue::__impl::lockfree_spsc_unbounded<T>::try_pop(T &value) {    
+    template <typename T> bool tsfqueue::__impl::lockfree_spsc_unbounded<T>::try_pop(T &value) {  
+        static_assert(std::is_nothrow_destructible<T>::value,
+                  "T must be nothrow destructible");  
         node* new_head = head->next.load(std::memory_order_acquire);
 
         if(new_head == nullptr){
@@ -34,7 +38,9 @@
     }   
 
     template <typename T> void tsfqueue::__impl::lockfree_spsc_unbounded<T>::wait_and_pop(T &value) {
-        
+        static_assert(std::is_nothrow_destructible<T>::value,
+            "T must be nothrow destructible");  
+            
         while(head->next.load(std::memory_order_acquire) == nullptr){
             std::this_thread::yield();//low latency-high cpu usage
         }
@@ -65,7 +71,11 @@
 
     template<typename T>
     template<typename... Args>
-    void tsfqueue::__impl::lockfree_spsc_unbounded<T>::emplace_back(Args&&... args){
+    void tsfqueue::__impl::lockfree_spsc_unbounded<T>::emplace_back(Args&&... args)
+    {       
+            static_assert(std::is_constructible<T, Args &&...>::value,
+                  "T must be constructible with Args&&...");
+
             node* stub = new node();
             stub->next.store(nullptr,std::memory_order_relaxed);
 
