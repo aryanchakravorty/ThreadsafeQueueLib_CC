@@ -5,7 +5,7 @@
 
 
 template <typename T>
-using queue = typename tsfqueue::__impl::lockfree_spsc_unbounded<T>;
+using queue = tsfqueue::__impl::lockfree_spsc_unbounded<T>;
 
 template <typename T> void queue<T>::push(T value) {
 

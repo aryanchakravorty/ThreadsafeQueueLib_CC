@@ -72,19 +72,21 @@ public:
     static_assert(std::is_default_constructible_v<T>,
         "T must be default constructible");
 
-    head= new node();
+    head = new node();
     head->next.store(nullptr,std::memory_order_relaxed);
 
-    tail=head;
+    tail = head;
+
   }
 
   ~lockfree_spsc_unbounded(){
+
     static_assert(std::is_nothrow_destructible_v<T>,
           "T must be nothrow destructible");  
 
-    while(head!=nullptr){
-      node* current=head;
-      head=head->next.load(std::memory_order_relaxed);
+    while(head != nullptr){
+      node* current = head;
+      head = head->next.load(std::memory_order_relaxed);
       delete current;
     }
   }
