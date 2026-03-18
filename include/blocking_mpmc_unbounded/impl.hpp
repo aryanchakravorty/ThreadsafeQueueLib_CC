@@ -11,9 +11,9 @@ template <typename T> void queue<T>::push(T value) {}
 template <typename T> queue<T>::node *queue<T>::get_tail() {}
 
 template <typename T>
-std::unique_ptr<queue<T>::node> queue<T>::wait_and_get() {}
+std::unique_ptr<typename queue<T>::node> queue<T>::wait_and_get() {}
 
-template <typename T> std::unique_ptr<queue<T>::node> queue<T>::try_get() {}
+template <typename T> std::unique_ptr<typename queue<T>::node> queue<T>::try_get() {}
 
 template <typename T> void queue<T>::wait_and_pop(T &value) {}
 
