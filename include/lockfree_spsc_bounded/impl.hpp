@@ -10,17 +10,18 @@ using queue = tsfqueue::__impl::lockfree_spsc_bounded<T, Capacity>;
 template <typename T, size_t Capacity>
 void queue<T, Capacity>::wait_and_push(T value)
 {
+  size_t next_tail = (tail_cache + 1) % capacity;
   while (true)
   {
-    if ((tail_cache + 1) % capacity == head_cache)
+    if (next_tail == head_cache)
     {
-      head_cache = head.load();
+      head_cache = head.load(std::memory_order_acquire); 
     }
     else
     {
       arr[tail_cache] = value;
-      tail_cache = (tail_cache + 1) % capacity;
-      tail.store(tail_cache);
+      tail_cache = next_tail;
+      tail.store(tail_cache, std::memory_order_release);
       break;
     }
   }
@@ -56,13 +57,13 @@ void queue<T, Capacity>::wait_and_pop(T &value)
   {
     if (head_cache == tail_cache)
     {
-      tail_cache = tail.load();
+      tail_cache = tail.load(std::memory_order_acquire);
     }
     else
     {
       value = arr[head_cache];
       head_cache = (head_cache + 1) % capacity;
-      head.store(head_cache);
+      head.store(head_cache , std::memory_order_release);
       break;
     }
   }
