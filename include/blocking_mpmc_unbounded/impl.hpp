@@ -95,6 +95,44 @@ void queue<T>::emplace_back(Args&&... args){
 }
 
 template <typename T>
+bool queue<T>::peek(T& value){
+    // Get exclusive excess of head.
+    std::lock_guard<std::mutex> guard_head_mutex(head_mutex);
+
+    // Get current size.
+    int csize;
+    {
+        std::lock_guard<std::mutex> guard_size_mutex(size_mutex);
+        csize = size_q;
+    }
+    
+    if (csize){
+        // We locked head and current size if >0 -> the size is going to be >0 till we release the head_mutex
+        value = *(head->data);
+        return 1;
+    }
+    return 0;
+}
+
+template <typename T>
+std::shared_ptr<T> queue<T>::peek(){
+    // Get exclusive excess of head.
+    std::lock_guard<std::mutex> guard_head_mutex(head_mutex);
+
+    // Get current size.
+    int csize;
+    {
+        std::lock_guard<std::mutex> guard_size_mutex(size_mutex);
+        csize = size_q;
+    }
+    
+    if (csize){
+        // We locked head and current size if >0 -> the size is going to be >0 till we release the head_mutex
+        std::shared_ptr<T> current_head= head->data;
+        return current_head;
+    }
+    return nullptr;
+}
 std::unique_ptr<typename queue<T>::node> queue<T>::wait_for_and_get(std::chrono::milliseconds timeout)
 {
     // Using unique_lock to lock and unlock on our will.
