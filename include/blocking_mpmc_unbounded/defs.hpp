@@ -126,6 +126,10 @@ public:
   // 10. Any more suggestions ??
   bool wait_for_pop(T&, std::chrono::milliseconds);
   std::shared_ptr<T> wait_for_pop(std::chrono::milliseconds);
+
+  // This function will allow us to peek the "head" of queue if it exist.
+  bool peek(T&);
+  std::shared_ptr<T> peek();
   // wait_for_get() added to private section.
 
 };
