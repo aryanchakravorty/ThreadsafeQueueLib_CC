@@ -18,16 +18,16 @@ template <typename T> class lockfree_spsc_unbounded {
   //--------------------------------------------------------------------------
   // Note that the next pointers are atomic there. Why ?? [Reason this]
   //
-  //if head and tail point to same stub node ,sp in trying to modify next ptr,sc is trying to read
+  //if head and tail point to same stub node ,producer is trying to modify next ptr,consumer is trying to read
   // next ptr(to check if queue is empty)->race condition
   //--------------------------------------------------------------------------
 
   //------------------------------------------------------------------------------
   // Also the head and tail members are cache-aligned. Why ?? [Reason this] (ask me for details)
   //
-  //cpu update on common cache line,if sp makes some changes,in invalidates other cores(sc) cache,so this has to keep on updating
+  //cpu update on common cache line,if producer makes some changes,it invalidates other cores(consumers) cache,so this has to keep on updating
   //which is time consuming
-  //cache aligning make the pointers sit on different cache lines,so now we can spam modifications(very latent)
+  //cache aligning make the pointers sit on different cache lines,so now we can spam modifications
   //--------------------------------------------------------------------------------
 
   // [Copy of blocking_mpmc_unbounded]
@@ -50,14 +50,10 @@ private:
   // 1. node* head;
   // 2. node* tail;
 
-  //------------------Note:--------------------
-  //we do not need atomic head/tail due to spsc
-  //doing cache align so that head and tail are in different cache lines
-
   alignas(tsfq::__impl::cache_line_size)node * head;
   alignas(tsfq::__impl::cache_line_size)node *tail;
 
-  // Description of priavte members :
+  // Description of private members :
   // 1. node* head -> Pointer to the head node
   // 2. node* tail -> Pointer to tail node
   // 3. Cache align 1-2
@@ -68,30 +64,33 @@ private:
 public:
   // Public member functions :
 
-  //-----------------------------------------------------------------------------------
+
   // Add relevant constructors and destructors -> Add these here only
 
-  //-----------Constructor-------------
-  //using memory_order_relaxed because default ordering is memory_order_seq_cst
   lockfree_spsc_unbounded(){
+
+    static_assert(std::is_default_constructible_v<T>,
+        "T must be default constructible");
+
     head= new node();
     head->next.store(nullptr,std::memory_order_relaxed);
 
     tail=head;
   }
-  //-----------Destructor---------------
-  ~lockfree_spsc_unbounded(){
-    while(head!=nullptr){
 
+  ~lockfree_spsc_unbounded(){
+    static_assert(std::is_nothrow_destructible_v<T>,
+          "T must be nothrow destructible");  
+
+    while(head!=nullptr){
       node* current=head;
       head=head->next.load(std::memory_order_relaxed);
       delete current;
-
     }
   }
 
   //Delete Copy and Move constructor
-  //Copy constructor not req as its spsc/could also cause double free crash
+  //Copy constructor not required as its spsc,could also cause double free crash
   //move constructor can break the queue if thread is running and we move the queue somewhere else
 
   lockfree_spsc_unbounded(const lockfree_spsc_unbounded&)=delete;
@@ -99,9 +98,6 @@ public:
 
   lockfree_spsc_unbounded(lockfree_spsc_unbounded&&) = delete;
   lockfree_spsc_unbounded &operator=(lockfree_spsc_unbounded&&) = delete;
-
-  //---------------------------------------------------------------------------------------------
-
 
   // 1. void push(value) : Pushes the value inside the queue, copies the value
   void push(T);
