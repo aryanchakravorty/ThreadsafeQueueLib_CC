@@ -15,29 +15,29 @@ template <typename T> void queue<T>::push(T value) {
     emplace_back(std::move(value));
 }
 
-template <typename T> bool queue<T>::try_pop(T &value) {  
 
-    static_assert(std::is_nothrow_destructible_v<T>,
-                "T must be nothrow destructible");  
+template <typename T>
+bool queue<T>::try_pop(T &value)
+{
     static_assert(std::is_move_assignable_v<T>,
-                "T must be move-assignable");
-
-    node* new_head = head->next.load(std::memory_order_acquire);
-
-    if(new_head == nullptr){
+                  "T must be move assignable");
+    static_assert(std::is_nothrow_destructible_v<T>, "T must be nothrow destructible");
+    node *next = head->next.load(std::memory_order_acquire);
+    if (next == nullptr)
+    {
         return false;
     }
+    else
+    {
+        value = std::move(head->data);
+        node *old = head;
+        head = next;
+        delete old;
+        capacity.fetch_sub(1, std::memory_order_relaxed);
+        return true;
+    }
+}
 
-    node* old_head = head;
-    value = std::move(head->data);
-    head = new_head;
-
-    delete old_head;
-
-    capacity.fetch_sub(1,std::memory_order_relaxed);
-
-    return true;
-}   
 
 template <typename T> void queue<T>::wait_and_pop(T &value) {
 
@@ -61,21 +61,22 @@ template <typename T> void queue<T>::wait_and_pop(T &value) {
     
 }
 
-template <typename T> bool queue<T>::peek(T &value) {
-
-    static_assert(std::is_copy_assignable_v<T>, 
-            "T must be copy-assignable");
-
-    if(empty()){
-        return false;
+template <typename T>
+bool queue<T>::peek(T &value)
+{
+    static_assert(std::is_copy_assignable_v<T>, "T must be copy assignable");
+    if (empty()) return false;
+    else
+    {
+        value = head->data;
+        return true;
     }
-
-    value = head -> data;
-    return true;
 }
 
-template <typename T> bool queue<T>::empty(void) {
-    return (head->next.load(std::memory_order_acquire) == nullptr);
+template <typename T>
+bool queue<T>::empty(void)
+{
+    return head->next.load(std::memory_order_acquire) == nullptr;
 }
 
 template<typename T>
