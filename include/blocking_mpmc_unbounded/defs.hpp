@@ -114,10 +114,10 @@ public:
   bool empty();
 
   // 7. Add static asserts
-  static_assert(std::is_copy_constructible_v(T) || std::is_move_constructible_v<T>,
+  static_assert(std::is_copy_constructible_<T> || std::is_move_constructible_v<T>,
   "T must be copyable or movable to be pushed into the queue.");
 
-  static_assert(std::is_copy_assignable_v(T) || std::is_move_assignable_v<T>,
+  static_assert(std::is_copy_assignable_v<T> || std::is_move_assignable_v<T>,
   "T must be copy-assignable or move-assignable to be popped into a reference.");
 
  static_assert(!std::is_reference_v<T>, 
@@ -132,12 +132,11 @@ public:
   size_t size();
 
   // 10. Any more suggestions ??
-  bool wait_for_pop(T&, std::chrono::milliseconds);
-  std::shared_ptr<T> wait_for_pop(std::chrono::milliseconds);
 
   // This function will allow us to peek the "head" of queue if it exist.
   bool peek(T&);
   std::shared_ptr<T> peek();
+  
   // wait_for_get() added to private section.
   bool wait_for_and_pop(T&, std::chrono::milliseconds);
   std::shared_ptr<T> wait_for_and_pop(std::chrono::milliseconds);

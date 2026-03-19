@@ -23,14 +23,19 @@ template <typename T> void queue<T>::push(T value) {
     tail->next = std::move(new_tail_unique_ptr);
 
     // Now we move to tail to its next, which is actual tail
-    tail = tail->next.get();;
+    tail = tail->next.get();
 
-    // Increment size
-    std::lock_guard<std::mutex> guard_size_mutex(size_mutex);
-    size_q++;
+    {
+        // Increment size
+        std::lock_guard<std::mutex> guard_size_mutex(size_mutex);
+        size_q++;
+    } // added this scope because if we notify a thread before unlocking size_mutex, in 
+    //   the wait_and_pop() function we are checking empty() which requires size_mutex.
 
     // Notify any thread (if any) waiting in "wait_and_pop" to wake up and pop.
     cond.notify_one();
+
+    return;
 }
 
 template <typename T> queue<T>::node *queue<T>::get_tail() {
@@ -47,9 +52,9 @@ std::unique_ptr<typename queue<T>::node> queue<T>::wait_and_get() {
     std::unique_lock<std::mutex> head_lock(head_mutex);
 
     //Waiting for the queue to not be empty
-    cond.wait(head_lock, [this]){
+    cond.wait(head_lock, [this]{
         return !empty();
-    }
+    });
 
     //Extracting the head node and updating it
     std::unique_ptr<node> old_head = std::move(head);
@@ -60,7 +65,8 @@ std::unique_ptr<typename queue<T>::node> queue<T>::wait_and_get() {
         std::lock_guard<std::mutex> size_lock(size_mutex);
         size_q--;
     }
-    return old_head;
+
+    return std::move(old_head);
 }
 
 template <typename T> 
@@ -75,11 +81,12 @@ std::unique_ptr<typename queue<T>::node> queue<T>::try_get() {
 
         return std::move(removing_node);
     }
+    
     return nullptr;
 }
 
 template<typename T>
-size_t size(){
+size_t queue<T>::size(){
     std::lock_guard<std::mutex> lock_size(size_mutex);
 
     return size_q;
@@ -90,7 +97,9 @@ template <typename T> void queue<T>::wait_and_pop(T &value) {
     std::unique_ptr<node> popped_node = wait_and_get();
 
     //Move the data into value
-    value = std::move(*popped_node->data)
+    value = std::move(*popped_node->data);
+
+    return;
 }
 
 template <typename T> std::shared_ptr<T> queue<T>::wait_and_pop() {
@@ -106,10 +115,10 @@ template <typename T>
 bool queue<T>::try_pop(T &value) {
     std::unique_ptr<node> removed_node = try_get();
     if (removed_node == nullptr){
-        return 0;
+        return false;
     }else{
-        value = *(removed_node->data);
-        return 1;
+        value = std::move(*(removed_node->data));
+        return true;
     }
 }
 
@@ -138,7 +147,7 @@ void queue<T>::emplace_back(Args&&... args){
     // Emplace the data directly at the memory address of shared_ptr<T>. (Perfect forwarding)
     std::shared_ptr<T> shared_ptr_for_value = std::make_shared<T>(std::forward<Args>(args)...);
 
-    // Get exclusive excess [Do it aftere non-critical tasks]
+    // Get exclusive axcess [Do it aftere non-critical tasks]
     std::lock_guard<std::mutex> guard_tail_mutex(tail_mutex);
 
     tail->data = std::move(shared_ptr_for_value);
@@ -150,11 +159,13 @@ void queue<T>::emplace_back(Args&&... args){
     // Increment size [Doing this at the end so that consumer thread does not interfer with this operation.]
     std::lock_guard<std::mutex> guard_size_mutex(size_mutex);
     size_q++;
+
+    return;
 }
 
 template <typename T>
 bool queue<T>::peek(T& value){
-    // Get exclusive excess of head.
+    // Get exclusive axcess of head.
     std::lock_guard<std::mutex> guard_head_mutex(head_mutex);
 
     // Get current size.
@@ -174,7 +185,7 @@ bool queue<T>::peek(T& value){
 
 template <typename T>
 std::shared_ptr<T> queue<T>::peek(){
-    // Get exclusive excess of head.
+    // Get exclusive axcess of head.
     std::lock_guard<std::mutex> guard_head_mutex(head_mutex);
 
     // Get current size.
