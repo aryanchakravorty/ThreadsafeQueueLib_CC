@@ -35,7 +35,7 @@ namespace tsfqueue::__impl
     // 2. node* tail;
     node *head;
     node *tail;
-    std::atomic<size_t>sz{0};
+    std::atomic<size_t>capacity{0};
     // Description of private members :
     // 1. node* head -> Pointer to the head node
     // 2. node* tail -> Pointer to tail node
