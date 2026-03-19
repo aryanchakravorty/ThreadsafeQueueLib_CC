@@ -90,7 +90,7 @@ template <typename T> void queue<T>::wait_and_pop(T &value) {
     std::unique_ptr<node> popped_node = wait_and_get();
 
     //Move the data into value
-    value = std::move(*popped_node->data);
+    value = *popped_node->data; // Removed std::move() from here due to dangling pointer issue with peek()
 
     return;
 }
@@ -110,7 +110,7 @@ bool queue<T>::try_pop(T &value) {
     if (removed_node == nullptr){
         return false;
     }else{
-        value = std::move(*(removed_node->data));
+        value = *(removed_node->data); // Removed std::move() from here due to dangling pointer issue with peek()
         return true;
     }
 }
