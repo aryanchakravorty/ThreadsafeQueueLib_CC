@@ -23,9 +23,9 @@ namespace tsfqueue::__impl
   private:
     // Add the private members :
     alignas(tsfq::__impl::cache_line_size) std::atomic<size_t> head;
+    alignas(tsfq::__impl::cache_line_size) size_t tail_cache;
     alignas(tsfq::__impl::cache_line_size) std::atomic<size_t> tail;
     alignas(tsfq::__impl::cache_line_size) size_t head_cache;
-    alignas(tsfq::__impl::cache_line_size) size_t tail_cache;
     static constexpr size_t capacity = Capacity + 1;
     alignas(tsfq::__impl::cache_line_size) T arr[capacity];
     // aligned the start of the array too
