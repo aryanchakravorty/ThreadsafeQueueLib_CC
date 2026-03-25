@@ -3,105 +3,97 @@
 
 #include "defs.hpp"
 
-
 template <typename T>
 using queue = tsfqueue::__impl::lockfree_spsc_unbounded<T>;
 
 template <typename T> void queue<T>::push(T value) {
 
-    static_assert(std::is_move_constructible_v<T>, 
-        "T must be move constructible");
+  static_assert(std::is_move_constructible_v<T>,
+                "T must be move constructible");
 
-    emplace_back(std::move(value));
+  emplace_back(std::move(value));
 }
 
-template <typename T> bool queue<T>::try_pop(T &value) {  
+template <typename T> bool queue<T>::try_pop(T &value) {
 
-    static_assert(std::is_nothrow_destructible_v<T>,
-                "T must be nothrow destructible");  
-    static_assert(std::is_move_assignable_v<T>,
-                "T must be move-assignable");
+  static_assert(std::is_nothrow_destructible_v<T>,
+                "T must be nothrow destructible");
+  static_assert(std::is_move_assignable_v<T>, "T must be move-assignable");
 
-    node* new_head = head->next.load(std::memory_order_acquire);
+  node *new_head = head->next.load(std::memory_order_acquire);
 
-    if(new_head == nullptr){
-        return false;
-    }
+  if (new_head == nullptr) {
+    return false;
+  }
 
-    node* old_head = head;
-    value = std::move(head->data);
-    head = new_head;
+  node *old_head = head;
+  value = std::move(head->data);
+  head = new_head;
 
-    delete old_head;
+  delete old_head;
 
-    capacity.fetch_sub(1,std::memory_order_relaxed);
+  capacity.fetch_sub(1, std::memory_order_relaxed);
 
-    return true;
-}   
+  return true;
+}
 
 template <typename T> void queue<T>::wait_and_pop(T &value) {
 
-    static_assert(std::is_nothrow_destructible_v<T>,
-        "T must be nothrow destructible"); 
-    static_assert(std::is_move_assignable_v<T>,
-        "T must be move-assignable"); 
-        
-    node * new_head;
-    while( ( new_head = head->next.load(std::memory_order_acquire) ) == nullptr ){
-        std::this_thread::yield();//low latency-high cpu usage
-    }
+  static_assert(std::is_nothrow_destructible_v<T>,
+                "T must be nothrow destructible");
+  static_assert(std::is_move_assignable_v<T>, "T must be move-assignable");
 
-    node* old_head = head;
-    value = std::move(head->data);
-    head = new_head;
+  node *new_head;
+  while ((new_head = head->next.load(std::memory_order_acquire)) == nullptr) {
+    std::this_thread::yield(); // low latency-high cpu usage
+  }
 
-    delete old_head;
+  node *old_head = head;
+  value = std::move(head->data);
+  head = new_head;
 
-    capacity.fetch_sub(1,std::memory_order_relaxed);
-    
+  delete old_head;
+
+  capacity.fetch_sub(1, std::memory_order_relaxed);
 }
 
-template <typename T> bool queue<T>::peek(T &value) {
+template <typename T> bool queue<T>::unsafe_peek(T &value) {
 
-    static_assert(std::is_copy_assignable_v<T>, 
-            "T must be copy-assignable");
+  static_assert(std::is_copy_assignable_v<T>, "T must be copy-assignable");
 
-    if(empty()){
-        return false;
-    }
+  if (empty()) {
+    return false;
+  }
 
-    value = head -> data;
-    return true;
+  value = head->data;
+  return true;
 }
 
 template <typename T> bool queue<T>::empty(void) {
-    return (head->next.load(std::memory_order_acquire) == nullptr);
+  return (head->next.load(std::memory_order_acquire) == nullptr);
 }
 
-template<typename T>
-template<typename... Args>
-void queue<T>::emplace_back(Args&&... args)
-{       
-        static_assert(std::is_constructible_v<T,Args&&...>,
-            "T must be constructible with Args&&...");
-        static_assert(std::is_default_constructible_v<T>,
-            "T must be default constructible");
-        static_assert(std::is_move_assignable_v<T>,
-            "T must be move-assignable");
+template <typename T>
+template <typename... Args>
+void queue<T>::emplace_back(Args &&...args) {
+  static_assert(std::is_constructible_v<T, Args &&...>,
+                "T must be constructible with Args&&...");
+  static_assert(std::is_default_constructible_v<T>,
+                "T must be default constructible");
+  static_assert(std::is_move_assignable_v<T>, "T must be move-assignable");
 
-        node* stub = new node();
-        stub->next.store(nullptr,std::memory_order_relaxed);
+  node *stub = new node();
+  stub->next.store(nullptr, std::memory_order_relaxed);
 
-        tail->data = T(std::forward<Args>(args)...);
-        capacity.fetch_add(1,std::memory_order_relaxed);
-        tail->next.store(stub,std::memory_order_release);
+  tail->data = T(std::forward<Args>(args)...);
+  capacity.fetch_add(1, std::memory_order_relaxed);
+  tail->next.store(stub, std::memory_order_release);
 
-        tail = stub;
+  tail = stub;
 }
 
-template<typename T>
-size_t queue<T>::size(){
-    return capacity.load(std::memory_order_relaxed);
+template <typename T> size_t queue<T>::size() {
+  return capacity.load(std::memory_order_relaxed);
 }
 
 #endif
