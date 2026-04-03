@@ -96,5 +96,5 @@ jobs:
       run: cd build && ./test_mpmc
 
     # 🔹 Safety net (always runs)
-    # - name: Run full test suite (safety)
-    #   run: cd build && ctest --output-on-failure
+    - name: Run full test suite (safety)
+      run: cd build && ctest --output-on-failure
